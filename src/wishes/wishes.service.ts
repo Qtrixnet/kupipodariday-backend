@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -122,6 +123,14 @@ export class WishesService {
   async copyWish(id: number, user: User): Promise<Wish> {
     const wish = await this.findOne({ where: { id } });
     const { name, link, image, price, description } = wish;
+
+    const existing = await this.wishesRepository.findOne({
+      where: { owner: { id: user.id }, link },
+    });
+
+    if (existing) {
+      throw new ConflictException('You have already copied this gift');
+    }
 
     await this.wishesRepository.increment({ id }, 'copied', 1);
 
